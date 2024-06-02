@@ -2,6 +2,7 @@ import asyncio
 import logging
 import datetime
 import sentry_sdk
+from pyrogram import Client
 
 from pyrogram import filters
 from pyrogram.errors import UserIsBlocked, UserDeactivated, UserDeactivatedBan
@@ -22,7 +23,10 @@ from constants import (
 logger = logging.getLogger(__name__)
 
 
-async def update_user_status(user_id, status):
+async def update_user_status(user_id: int, status: UserStatus) -> None:
+    """
+    Обновляет статус пользователя в базе данных
+    """
     async with async_session() as session:
         await session.execute(
             update(User)
@@ -33,7 +37,11 @@ async def update_user_status(user_id, status):
 
 
 @client.on_message(filters.private)
-async def handle_message(client, message):
+async def handle_message(client: Client, message: str) -> None:
+    """
+    Обработчик всех сообщений от пользователя, при первом обращении
+    создает запись в базе данных и запускает воронку сообщений
+    """
     async with async_session() as session:
         user_id = message.from_user.id
         result = await session.execute(
@@ -53,7 +61,10 @@ async def handle_message(client, message):
             await asyncio.create_task(start_funnel(user_id))
 
 
-async def start_funnel(user_id):
+async def start_funnel(user_id: int) -> None:
+    """
+    Запускает воронку сообщений для пользователя
+    """
     logger.info(f"Starting funnel for user with tg_id:{user_id}")
     messages = [
         (FIRST_DELAY, FIRST_MSG),
@@ -82,7 +93,10 @@ async def start_funnel(user_id):
 
 
 @client.on_message(filters.text & filters.private)
-async def trigger_handler(client, message):
+async def trigger_handler(client: Client, message: str) -> None:
+    """
+    Обработчик сообщений, которые содержат триггерные слова
+    """
     if any(word in message.text.lower() for word in TRIGGER_WORDS):
         await update_user_status(message.from_user.id, UserStatus.FINISHED)
         logger.info(
