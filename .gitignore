@@ -1,0 +1,7 @@
+venv/
+.env
+pycharm/
+.idea/
+__pycache__/
+*.log
+*.session
