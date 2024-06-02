@@ -16,6 +16,7 @@ from constants import (
     FIRST_DELAY,
     SECOND_DELAY,
     THIRD_DELAY,
+    TRIGGER_WORDS
 )
 
 logger = logging.getLogger(__name__)
@@ -83,7 +84,7 @@ async def start_funnel(user_id):
 
 @client.on_message(filters.text & filters.private)
 async def trigger_handler(client, message):
-    if any(word in message.text.lower() for word in ["прекрасно", "ожидать"]):
+    if any(word in message.text.lower() for word in TRIGGER_WORDS):
         await update_user_status(message.from_user.id, UserStatus.FINISHED)
         logger.info(
             f"User with tg_id:{message.from_user.id} finished the funnel"
