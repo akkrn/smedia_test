@@ -45,6 +45,7 @@ async def handle_message(client, message):
 
 
 async def start_funnel(user_id):
+    logger.info(f"Starting funnel for user with tg_id:{user_id}")
     messages = [
         (FIRST_DELAY, FIRST_MSG),
         (SECOND_DELAY, SECOND_MSG),
@@ -64,7 +65,7 @@ async def start_funnel(user_id):
             try:
                 await client.send_message(user_id, text)
             except (UserIsBlocked, UserDeactivated, UserDeactivatedBan) as e:
-                logger.error(f"User {user_id} is blocked or deactivated: {e}")
+                logger.info(f"User with tg_id: {user_id} is blocked or deactivated: {e}")
                 await update_user_status(user_id, UserStatus.DEAD)
                 return
 
@@ -73,6 +74,7 @@ async def start_funnel(user_id):
 async def trigger_handler(client, message):
     if any(word in message.text.lower() for word in ["прекрасно", "ожидать"]):
         await update_user_status(message.from_user.id, UserStatus.FINISHED)
+        logger.info(f"User with tg_id:{message.from_user.id} finished the funnel")
 
 
 if __name__ == "__main__":
