@@ -9,7 +9,7 @@ from sqlalchemy import select, update
 
 from models import User, UserStatus
 from loader import client, async_session, sentry_url
-
+from constants import FIRST_MSG, SECOND_MSG, THIRD_MSG, FIRST_DELAY, SECOND_DELAY, THIRD_DELAY
 logger = logging.getLogger(__name__)
 
 
@@ -45,15 +45,10 @@ async def handle_message(client, message):
 
 
 async def start_funnel(user_id):
-    # messages = [
-    #     (6 * 60, "Текст1"),
-    #     (39 * 60, "Текст2"),
-    #     (26 * 60 * 60, "Текст3"),
-    # ]
     messages = [
-        (1 * 5, "Текст1"),
-        (3 * 5, "Текст2"),
-        (4 * 5, "Текст3"),
+        (FIRST_DELAY, FIRST_MSG),
+        (SECOND_DELAY, SECOND_MSG),
+        (THIRD_DELAY, THIRD_MSG),
     ]
     for delay, text in messages:
         await asyncio.sleep(delay)
