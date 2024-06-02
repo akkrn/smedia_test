@@ -43,7 +43,6 @@ async def handle_message(client, message):
 
         if user is None:
             user = User(
-                id=user_id,
                 tg_id=user_id,
                 tg_username=message.from_user.username,
                 tg_first_name=message.from_user.first_name,
