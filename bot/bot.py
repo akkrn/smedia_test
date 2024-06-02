@@ -9,7 +9,15 @@ from sqlalchemy import select, update
 
 from models import User, UserStatus
 from loader import client, async_session, sentry_url
-from constants import FIRST_MSG, SECOND_MSG, THIRD_MSG, FIRST_DELAY, SECOND_DELAY, THIRD_DELAY
+from constants import (
+    FIRST_MSG,
+    SECOND_MSG,
+    THIRD_MSG,
+    FIRST_DELAY,
+    SECOND_DELAY,
+    THIRD_DELAY,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -33,12 +41,13 @@ async def handle_message(client, message):
         user = result.scalar_one_or_none()
 
         if user is None:
-            user = User(id=user_id,
-                        tg_id=user_id,
-                        tg_username=message.from_user.username,
-                        tg_first_name=message.from_user.first_name,
-                        tg_last_name=message.from_user.last_name,
-                        )
+            user = User(
+                id=user_id,
+                tg_id=user_id,
+                tg_username=message.from_user.username,
+                tg_first_name=message.from_user.first_name,
+                tg_last_name=message.from_user.last_name,
+            )
             session.add(user)
             await session.commit()
             await asyncio.create_task(start_funnel(user_id))
@@ -65,7 +74,9 @@ async def start_funnel(user_id):
             try:
                 await client.send_message(user_id, text)
             except (UserIsBlocked, UserDeactivated, UserDeactivatedBan) as e:
-                logger.info(f"User with tg_id: {user_id} is blocked or deactivated: {e}")
+                logger.info(
+                    f"User with tg_id: {user_id} is blocked or deactivated: {e}"
+                )
                 await update_user_status(user_id, UserStatus.DEAD)
                 return
 
@@ -74,7 +85,9 @@ async def start_funnel(user_id):
 async def trigger_handler(client, message):
     if any(word in message.text.lower() for word in ["прекрасно", "ожидать"]):
         await update_user_status(message.from_user.id, UserStatus.FINISHED)
-        logger.info(f"User with tg_id:{message.from_user.id} finished the funnel")
+        logger.info(
+            f"User with tg_id:{message.from_user.id} finished the funnel"
+        )
 
 
 if __name__ == "__main__":
