@@ -5,6 +5,7 @@ import sentry_sdk
 from pyrogram import Client
 
 from pyrogram import filters
+from pyrogram import filters, Client
 from pyrogram.errors import UserIsBlocked, UserDeactivated, UserDeactivatedBan
 from sqlalchemy import select, update
 
@@ -19,7 +20,7 @@ from constants import (
     THIRD_DELAY,
     TRIGGER_WORDS
 )
-
+from filters import trigger_filter
 logger = logging.getLogger(__name__)
 
 
@@ -38,6 +39,17 @@ async def update_user_status(user_id: int, status: UserStatus) -> None:
 
 @client.on_message(filters.private)
 async def handle_message(client: Client, message: str) -> None:
+trigger_filter = filters.create(trigger_filter)
+@app.on_message(trigger_filter)
+async def trigger_handler(client: Client, message: Message) -> None:
+    """
+    Обработчик сообщений, которые содержат триггерные слова
+    """
+    await update_user_status(message.from_user.id, UserStatus.FINISHED)
+    logger.info(
+        f"User with tg_id:{message.from_user.id} finished the funnel"
+    )
+
     """
     Обработчик всех сообщений от пользователя, при первом обращении
     создает запись в базе данных и запускает воронку сообщений
@@ -90,18 +102,6 @@ async def start_funnel(user_id: int) -> None:
                 )
                 await update_user_status(user_id, UserStatus.DEAD)
                 return
-
-
-@client.on_message(filters.text & filters.private)
-async def trigger_handler(client: Client, message: str) -> None:
-    """
-    Обработчик сообщений, которые содержат триггерные слова
-    """
-    if any(word in message.text.lower() for word in TRIGGER_WORDS):
-        await update_user_status(message.from_user.id, UserStatus.FINISHED)
-        logger.info(
-            f"User with tg_id:{message.from_user.id} finished the funnel"
-        )
 
 
 if __name__ == "__main__":
