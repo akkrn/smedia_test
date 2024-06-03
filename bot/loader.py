@@ -22,7 +22,7 @@ async_session = sessionmaker(
 
 sentry_url = config.sentry_url.url
 
-client = Client(
+app = Client(
     config.user_bot.app_name,
     api_id=config.user_bot.api_id,
     api_hash=config.user_bot.api_hash,

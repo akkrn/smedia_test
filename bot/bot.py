@@ -2,15 +2,13 @@ import asyncio
 import logging
 import datetime
 import sentry_sdk
-from pyrogram import Client
-
-from pyrogram import filters
 from pyrogram import filters, Client
+from pyrogram.types import Message
 from pyrogram.errors import UserIsBlocked, UserDeactivated, UserDeactivatedBan
 from sqlalchemy import select, update
 
 from models import User, UserStatus
-from loader import client, async_session, sentry_url
+from loader import app, async_session, sentry_url
 from constants import (
     FIRST_MSG,
     SECOND_MSG,
@@ -37,8 +35,6 @@ async def update_user_status(user_id: int, status: UserStatus) -> None:
         await session.commit()
 
 
-@client.on_message(filters.private)
-async def handle_message(client: Client, message: str) -> None:
 trigger_filter = filters.create(trigger_filter)
 @app.on_message(trigger_filter)
 async def trigger_handler(client: Client, message: Message) -> None:
@@ -50,6 +46,8 @@ async def trigger_handler(client: Client, message: Message) -> None:
         f"User with tg_id:{message.from_user.id} finished the funnel"
     )
 
+@app.on_message(filters.private)
+async def handle_message(client: Client, message: Message) -> None:
     """
     Обработчик всех сообщений от пользователя, при первом обращении
     создает запись в базе данных и запускает воронку сообщений
@@ -111,4 +109,4 @@ if __name__ == "__main__":
         format="%(filename)s:%(lineno)d #%(levelname)-8s "
         "[%(asctime)s] - %(name)s - %(message)s",
     )
-    client.run()
+    app.run()
