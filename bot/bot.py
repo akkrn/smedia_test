@@ -16,9 +16,10 @@ from constants import (
     FIRST_DELAY,
     SECOND_DELAY,
     THIRD_DELAY,
-    TRIGGER_WORDS
+    TRIGGER_WORDS,
 )
 from filters import trigger_filter
+
 logger = logging.getLogger(__name__)
 
 
@@ -36,15 +37,16 @@ async def update_user_status(user_id: int, status: UserStatus) -> None:
 
 
 trigger_filter = filters.create(trigger_filter)
+
+
 @app.on_message(trigger_filter)
 async def trigger_handler(client: Client, message: Message) -> None:
     """
     Обработчик сообщений, которые содержат триггерные слова
     """
     await update_user_status(message.from_user.id, UserStatus.FINISHED)
-    logger.info(
-        f"User with tg_id:{message.from_user.id} finished the funnel"
-    )
+    logger.info(f"User with tg_id:{message.from_user.id} finished the funnel")
+
 
 @app.on_message(filters.private)
 async def handle_message(client: Client, message: Message) -> None:
@@ -92,7 +94,13 @@ async def start_funnel(user_id: int) -> None:
             if user is None or user.status == UserStatus.DEAD:
                 return
             if user and user.status == UserStatus.FINISHED and second_msg_time:
-                delay = THIRD_DELAY - (datetime.datetime.now() - min(user.status_updated_at, second_msg_time)).seconds
+                delay = (
+                    THIRD_DELAY
+                    - (
+                        datetime.datetime.now()
+                        - min(user.status_updated_at, second_msg_time)
+                    ).seconds
+                )
             await asyncio.sleep(delay)
             try:
                 await app.send_message(user_id, text)
