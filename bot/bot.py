@@ -81,19 +81,23 @@ async def start_funnel(user_id: int) -> None:
         (SECOND_DELAY, SECOND_MSG),
         (THIRD_DELAY, THIRD_MSG),
     ]
-    for delay, text in messages:
-        await asyncio.sleep(delay)
+    second_msg_time = None
 
+    for idx, (delay, text) in enumerate(messages):
         async with async_session() as session:
             result = await session.execute(
                 select(User).where(User.tg_id == user_id)
             )
             user = result.scalar_one_or_none()
-            if user is None or user.status != UserStatus.ALIVE:
+            if user is None or user.status == UserStatus.DEAD:
                 return
-
+            if user and user.status == UserStatus.FINISHED and second_msg_time:
+                delay = THIRD_DELAY - (datetime.datetime.now() - min(user.status_updated_at, second_msg_time)).seconds
+            await asyncio.sleep(delay)
             try:
-                await client.send_message(user_id, text)
+                await app.send_message(user_id, text)
+                if idx == 1:
+                    second_msg_time = datetime.datetime.now()
             except (UserIsBlocked, UserDeactivated, UserDeactivatedBan) as e:
                 logger.info(
                     f"User with tg_id: {user_id} is blocked or deactivated: {e}"
